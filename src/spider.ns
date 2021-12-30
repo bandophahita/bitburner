@@ -1,5 +1,5 @@
 // Crawls through each server and attempts to get into servers available
-// then runs whatever script was passed in.
+// then runs whatever script was passed in (mainHack if nothing specified)
 
 import { settings, setItem } from 'common.ns'
 
