@@ -1,4 +1,5 @@
-// I'm not exactly sure what this script does yet. 
+// Crawls through each server and attempts to get into servers available
+// then runs whatever script was passed in.
 
 import { settings, setItem } from 'common.ns'
 
