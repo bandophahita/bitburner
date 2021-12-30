@@ -1,4 +1,7 @@
-const baseUrl = 'https://raw.githubusercontent.com/moriakaice/bitburner/master/src/'
+// This will pull down the files from github to your HOME.
+// since this is a fork, I've put my own github address here.  This should be the only place it is needed.
+
+const baseUrl = 'https://raw.githubusercontent.com/bandophahita/bitburner/my_version/src/'
 const filesToDownload = [
   'common.ns',
   'mainHack.ns',
