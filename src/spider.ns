@@ -1,3 +1,5 @@
+// I'm not exactly sure what this script does yet. 
+
 import { settings, setItem } from 'common.ns'
 
 const hackPrograms = ['BruteSSH.exe', 'FTPCrack.exe', 'relaySMTP.exe', 'HTTPWorm.exe', 'SQLInject.exe']
