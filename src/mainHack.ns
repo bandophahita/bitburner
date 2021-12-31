@@ -219,11 +219,11 @@ export async function main(ns) {
     }
     weakenCycles = growCycles
 
-    ns.tprint(`[${localeHHMMSS()}] TARGET: ${targetName}  ACTION: ${action}  WAKE: ${localeHHMMSS(new Date().getTime() + weakenTime + 300)} (${convertMSToHHMMSS(weakenTime + 300)})`)
-    ns.tprint(`[${localeHHMMSS()}] Stock: baseSecurity: ${target.baseSecurityLevel}; minSecurity: ${target.minSecurityLevel}; maxMoney: $${numberWithCommas(parseInt(target.maxMoney, 10))}`)
-    ns.tprint(`[${localeHHMMSS()}] Current: SECURITY: ${Math.floor(securityLevel * 1000) / 1000}; MONEY: $${numberWithCommas(parseInt(money, 10))}`)
-    ns.tprint(`[${localeHHMMSS()}] TimeTo: HACK: ${convertMSToHHMMSS(hackTime)} GROW: ${convertMSToHHMMSS(growTime)} WEAKEN: ${convertMSToHHMMSS(weakenTime)}`)
-    ns.tprint(`[${localeHHMMSS()}] Delays: HACK: ${convertMSToHHMMSS(hackDelay)} GROW: ${convertMSToHHMMSS(growDelay)}`)
+    ns.tprint(`TARGET: ${targetName}  ACTION: ${action}  WAKE: ${localeHHMMSS(new Date().getTime() + weakenTime + 300)} (${convertMSToHHMMSS(weakenTime + 300)})`)
+    ns.tprint(`Stock: baseSecurity: ${target.baseSecurityLevel}; minSecurity: ${target.minSecurityLevel}; maxMoney: $${numberWithCommas(parseInt(target.maxMoney, 10))}`)
+    ns.tprint(`Current: SECURITY: ${Math.floor(securityLevel * 1000) / 1000}; MONEY: $${numberWithCommas(parseInt(money, 10))}`)
+    ns.tprint(`TimeTo: HACK: ${convertMSToHHMMSS(hackTime)} GROW: ${convertMSToHHMMSS(growTime)} WEAKEN: ${convertMSToHHMMSS(weakenTime)}`)
+    ns.tprint(`Delays: HACK: ${convertMSToHHMMSS(hackDelay)} GROW: ${convertMSToHHMMSS(growDelay)}`)
 
     if (action === 'weaken') {
       if (settings.changes.weaken * weakenCycles > securityLevel - target.minSecurityLevel) {
@@ -237,10 +237,7 @@ export async function main(ns) {
         growCycles = 0
       }
 
-      ns.tprint(
-        `[${localeHHMMSS()}] Cycles ratio: ${growCycles} grow cycles; ${weakenCycles} weaken cycles; expected security reduction: ${Math.floor(settings.changes.weaken * weakenCycles * 1000) / 1000
-        }`
-      )
+      ns.tprint(`Cycles ratio: GROW: ${growCycles} WEAKEN: ${weakenCycles}  expected security reduction: ${Math.floor(settings.changes.weaken * weakenCycles * 1000) / 1000}`)
 
       for (let i = 0; i < hackableServers.length; i++) {
         const server = serverMap.servers[hackableServers[i]]
@@ -262,7 +259,7 @@ export async function main(ns) {
       weakenCycles = weakenCyclesForGrow(growCycles)
       growCycles -= weakenCycles
 
-      ns.tprint(`[${localeHHMMSS()}] Cycles ratio: ${growCycles} grow cycles; ${weakenCycles} weaken cycles`)
+      ns.tprint(`Cycles ratio: GROW: ${growCycles} WEAKEN: ${weakenCycles}`)
 
       for (let i = 0; i < hackableServers.length; i++) {
         const server = serverMap.servers[hackableServers[i]]
@@ -301,7 +298,7 @@ export async function main(ns) {
         hackCycles -= Math.ceil((weakenCycles * 1.75) / 1.7)
       }
 
-      ns.tprint(`[${localeHHMMSS()}] Cycles ratio: ${hackCycles} hack cycles; ${growCycles} grow cycles; ${weakenCycles} weaken cycles`)
+      ns.tprint(`Cycles ratio: GROW: ${growCycles} WEAKEN: ${weakenCycles} HACK: ${hackCycles}`)
 
       for (let i = 0; i < hackableServers.length; i++) {
         const server = serverMap.servers[hackableServers[i]]
