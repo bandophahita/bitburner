@@ -1,3 +1,5 @@
+import { localeHHMMSS, } from 'common.ns'
+
 const settings = {
   homeRamReserved: 20,
   homeRamReservedBase: 20,
@@ -60,15 +62,6 @@ function convertMSToHHMMSS(ms = 0) {
   }
 
   return new Date(ms).toISOString().substr(11, 8)
-}
-
-// ------------------------------------------------------------------------------------------------
-function localeHHMMSS(ms = 0) {
-  if (!ms) {
-    ms = new Date().getTime()
-  }
-
-  return new Date(ms).toLocaleTimeString()
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -160,7 +153,7 @@ function findTargetServer(ns, serversList, servers, serverExtraData) {
 
 // ------------------------------------------------------------------------------------------------
 export async function main(ns) {
-  ns.tprint(`[${localeHHMMSS()}] Starting mainHack.ns`)
+  ns.tprint(`Starting mainHack.ns`)
   let hostname = ns.getHostname()
 
   if (hostname !== 'home') {
@@ -177,7 +170,7 @@ export async function main(ns) {
     }
 
     if (!serverMap || serverMap.lastUpdate < new Date().getTime() - settings.mapRefreshInterval) {
-      ns.tprint(`[${localeHHMMSS()}] Spawning spider.ns`)
+      ns.tprint(`Spawning spider.ns`)
       ns.spawn('spider.ns', 1, 'mainHack.ns')
       ns.exit()
       return
