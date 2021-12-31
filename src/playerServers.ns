@@ -13,24 +13,18 @@ const settings = {
   },
 }
 
+// ------------------------------------------------------------------------------------------------
 function getItem(key) {
   let item = localStorage.getItem(key)
-
   return item ? JSON.parse(item) : undefined
 }
 
+// ------------------------------------------------------------------------------------------------
 function setItem(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
-function localeHHMMSS(ms = 0) {
-  if (!ms) {
-    ms = new Date().getTime()
-  }
-
-  return new Date(ms).toLocaleTimeString()
-}
-
+// ------------------------------------------------------------------------------------------------
 function createUUID() {
   var dt = new Date().getTime()
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -84,7 +78,7 @@ function getPurchasedServers(ns) {
 }
 
 export async function main(ns) {
-  ns.tprint(`[${localeHHMMSS()}] Starting playerServers.ns`)
+  ns.tprint(`Starting playerServers.ns`)
 
   settings.maxGbRam = ns.getPurchasedServerMaxRam()
   settings.maxPlayerServers = ns.getPurchasedServerLimit()
@@ -110,7 +104,6 @@ export async function main(ns) {
         while (ns.getServerMoneyAvailable('home') * settings.totalMoneyAllocation >= targetRam * settings.gbRamCost * settings.maxPlayerServers) {
           targetRam *= 2
         }
-
         targetRam /= 2
       }
 
@@ -122,7 +115,7 @@ export async function main(ns) {
         hostname = ns.purchaseServer(hostname, targetRam)
 
         if (hostname) {
-          ns.tprint(`[${localeHHMMSS()}] Bought new server: ${hostname} (${targetRam} GB)`)
+          ns.tprint(`Bought new server: ${hostname} (${targetRam} GB)`)
 
           updateServer(ns, serverMap, hostname)
           didChange = true
@@ -134,7 +127,7 @@ export async function main(ns) {
       let targetRam = biggestCurrentServer
 
       if (smallestCurrentServer === settings.maxGbRam) {
-        ns.tprint(`[${localeHHMMSS()}] All servers maxxed. Exiting.`)
+        ns.tprint(`All servers maxxed. Exiting.`)
         ns.exit()
         return
       }
@@ -167,7 +160,7 @@ export async function main(ns) {
                 hostname = await ns.purchaseServer(hostname, targetRam)
 
                 if (hostname) {
-                  ns.tprint(`[${localeHHMMSS()}] Upgraded: ${purchasedServers[0]} into server: ${hostname} (${targetRam} GB)`)
+                  ns.tprint(`Upgraded: ${purchasedServers[0]} into server: ${hostname} (${targetRam} GB)`)
 
                   updateServer(ns, serverMap, hostname)
                   didChange = true
