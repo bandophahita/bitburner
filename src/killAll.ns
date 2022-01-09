@@ -1,69 +1,62 @@
-// import { localeHHMMSS, } from 'common.ns'
-
-const settings = {
-    mapRefreshInterval: 24 * 60 * 60 * 1000,
-    keys: {
-        serverMap: 'BB_SERVER_MAP',
-    },
-}
-const scriptsToKill = [
+// This file will download all the needed files to perform the runHacking routine.
+// These will only go through the actions of weaken/grow/hacking servers.
+import { baseUrl, } from 'common.ns'
+const filesToDownload = [
+    'common.ns',
     'mainHack.ns',
     'spider.ns',
     'grow.ns',
     'hack.ns',
     'weaken.ns',
     'playerServers.ns',
+    'killAll.ns',
     'runHacking.ns',
-    'initHacking.ns',
-    'start.ns',
     'find.ns',
 ]
+const valuesToRemove = ['BB_SERVER_MAP']
 
-function getItem(key) {
-    let item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : undefined
+/** @param {NS} ns */
+async function areYouSure(ns) {
+    let anyfilesexist = false
+    for (let filename of filesToDownload) {
+        if (ns.fileExists(filename)){
+            anyfilesexist = true
+        }
+    }
+    if (anyfilesexist) {
+        if (!await ns.prompt(`Are you sure? This will overwrite current scripts.`)) {
+            ns.exit()
+        }
+        if (!await ns.prompt("Are you REALLY sure? Local edits will be lost")) {
+            ns.exit()
+        }
+    }
 }
+
 
 /** @param {NS} ns */
 export async function main(ns) {
-    ns.tprint(`Starting killAll.ns`)
-
-    const scriptToRunAfter = ns.args[0]
+    ns.tprint(`Starting initHacking.ns`)
 
     let hostname = ns.getHostname()
 
     if (hostname !== 'home') {
         throw new Exception('Run the script from home')
     }
+    await areYouSure(ns);
 
-    const serverMap = getItem(settings.keys.serverMap)
-
-    if (!serverMap || serverMap.lastUpdate < new Date().getTime() - settings.mapRefreshInterval) {
-        ns.tprint(`Spawning spider.ns`)
-        ns.spawn('spider.ns', 1, 'killAll.ns')
-        ns.exit()
-        return
+    for (let i = 0; i < filesToDownload.length; i++) {
+        const filename = filesToDownload[i]
+        const path = baseUrl + filename
+        await ns.scriptKill(filename, 'home')
+        await ns.rm(filename)
+        await ns.sleep(200)
+        ns.tprint(`Trying to download ${path}`)
+        await ns.wget(path + '?ts=' + new Date().getTime(), filename)
     }
 
-    for (let i = 0; i < scriptsToKill.length; i++) {
-        await ns.scriptKill(scriptsToKill[i], 'home')
-    }
+    valuesToRemove.map((value) => localStorage.removeItem(value))
 
-    const killAbleServers = Object.keys(serverMap.servers)
-        .filter((hostname) => ns.serverExists(hostname))
-        .filter((hostname) => hostname !== 'home')
-
-    for (let i = 0; i < killAbleServers.length; i++) {
-        await ns.killall(killAbleServers[i])
-    }
-
-    ns.tprint(`All processes killed`)
-
-    if (scriptToRunAfter) {
-        ns.tprint(`Spawning ${scriptToRunAfter}`)
-        ns.spawn(scriptToRunAfter, 1)
-    } else {
-        ns.tprint(`Spawning runHacking.ns`)
-        ns.spawn('runHacking.ns', 1)
-    }
+    ns.tprint(`Spawning killAll.ns`)
+    ns.spawn('killAll.ns', 1, 'runHacking.ns')
 }
