@@ -26,18 +26,19 @@ export function setItem(key, value) {
 }
 
 // ------------------------------------------------------------------------------------------------
-export async function main(ns) {
-  return {
-    settings,
-    getItem,
-    setItem,
-  }
-}
-
-// ------------------------------------------------------------------------------------------------
 export function localeHHMMSS(ms = 0) {
   if (!ms) {
     ms = new Date().getTime()
   }
   return new Date(ms).toLocaleTimeString()
+}
+
+// ------------------------------------------------------------------------------------------------
+export async function main(ns) {
+  return {
+    settings,
+    getItem,
+    setItem,
+    localeHHMMSS,
+  }
 }
