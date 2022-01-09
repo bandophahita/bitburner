@@ -1,3 +1,5 @@
+// This file will download all the needed files to perform the runHacking routine.
+// These will only go through the actions of weaken/grow/hacking servers.
 const baseUrl = 'https://raw.githubusercontent.com/bandophahita/bitburner/master/src/'
 const filesToDownload = [
     'common.ns',
