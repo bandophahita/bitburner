@@ -1,0 +1,104 @@
+/*
+[shares, avgPx, sharesShort, avgPxShort] 
+    Returns an array of four elements that represents the player’s position in a stock.
+    The first element is the returned array is the number of shares the player owns of the stock in the Long position. 
+    The second element in the array is the average price of the player’s shares in the Long position.
+    The third element in the array is the number of shares the player owns of the stock in the Short position. 
+    The fourth element in the array is the average price of the player’s Short position.
+*/
+
+/** @param {NS} ns */
+export async function main(ns) {
+    //*********PARAMS FOR SCRIPT ************//
+    var maxSharePer = 0.45                  // maximum percent of a symbol's total stock to buy
+    var stockBuyPer = 0.6                  //  percent probablity to buy symbol
+    var stockVolPer = .03                 //   percent stock will move to buy
+    var moneyKeep = 1000000000           //    min money to keep on hand 1000000000 = 1b
+    var minBuy    = 10000000;            // min buy amount - default 10000000 = 10m
+    var minSharePer = 5                 //     min shares to buy
+    var orderMax = 1000000000000       //      max money to spend on a single order 1,000,000,000,000 = 1t
+    var profPer = 0.05                //       min profit percentage to sell
+    var panicPer = 0.15              //        percentage loss to panic sell at
+    //******************************//
+    ns.disableLog('disableLog');
+    ns.disableLog('sleep');
+    ns.disableLog('getServerMoneyAvailable');
+    while (true) {
+        ns.print("-----------------------------");
+        var stocks = ns.stock.getSymbols();
+        for (const stock of stocks) {
+            var [nShares, avgPx, sharesShort, avgPxShort] = ns.stock.getPosition(stock);
+            var forecast = ns.stock.getForecast(stock);
+            if (nShares) {
+                //ns.print(`Position: ${stock}, ${nShares} Profit: ${ns.nFormat(Math.round(ns.stock.getSaleGain(stock, nShares, "Long") - (nShares * avgPx)), '0,0', "Long")} % ${ns.nFormat(ns.stock.getSaleGain(stock, nShares, "Long") / (nShares * avgPx), "0%")}` );
+                //let bar = (nShares * avgPx); // money we have tied up in our shares
+                let gross = ns.stock.getSaleGain(stock, nShares, "Long"); // money we'll get for selling
+                let profit = Math.round(gross - (nShares * avgPx)); // amount money gained 
+                let fmt_profit = ns.nFormat(profit, '0.0a')
+                let pct_profit = ns.nFormat(gross / (nShares * avgPx), "0%");
+                let fmt_nshares = ns.nFormat(nShares, '0.0a');
+
+                ns.print(`Position: ${stock}  Shares: ${fmt_nshares}  Profit: $${fmt_profit} :: ${pct_profit}`)
+                sellPositions(stock);
+            }
+            buyPositions(stock);
+        }
+        await ns.sleep(6000);
+    }
+
+    // ***************************** //
+    /** @param {string} stock */
+    function sellPositions(stock) {
+        //sell if only 40% chance increase
+		if (ns.stock.getForecast(stock) < 0.4) {
+            //ns.toast("SOLD STOCK " + stock + " for " + ns.nFormat(Math.round(ns.stock.getSaleGain(stock, position[0], "Long") - (position[0] * position[1])), '0,0') + " profit!", SELL, ttime);
+            let current_price = ns.stock.sell(stock, nShares);
+            let current_total = nShares * current_price;
+            let fmt_price = ns.nFormat(current_price, '0.0a');
+            let fmt_total = ns.nFormat(current_total, '0.0a');
+
+            let amtsold = ns.nFormat(Math.round(ns.stock.getSaleGain(stock, nShares, "Long") - (nShares * avgPx)), '0.0a')
+            let msg = `SOLD ${stock} for $${fmt_total} : $${amtsold} profit!  `
+            ns.toast(msg, SELL, ttime);
+            ns.tprint(msg)
+		}     
+    }
+    /** @param {string} stock */
+    function buyPositions(stock) {
+        var maxShares = (ns.stock.getMaxShares(stock) * maxSharePer) - nShares;
+        var askPrice = ns.stock.getAskPrice(stock);
+        var forecast = ns.stock.getForecast(stock);
+        var volPer = ns.stock.getVolatility(stock);
+        //var minBuy = 10000000;
+        var playerMoney = ns.getServerMoneyAvailable('home');
+        //if the stock will move positive by stockbuyper or more and it will grow stockvolper or more
+        if (forecast >= stockBuyPer && volPer <= stockVolPer) {
+            //check money for one share
+            if (playerMoney - moneyKeep > ns.stock.getPurchaseCost(stock, minSharePer, "Long")) {
+                var shares = Math.round(Math.min((playerMoney - moneyKeep - 100000) / askPrice, orderMax / askPrice));
+                if (shares * askPrice > minBuy) {
+                    let nBuyShares = Math.min(shares, maxShares);
+                    if (nBuyShares > 0) {
+                        let current_price = ns.stock.buy(stock, nBuyShares);
+                        let current_total = nBuyShares * current_price;
+                        let fmt_price = ns.nFormat(current_price, '0.0a');  // 0,0 == 123,456,789 // 
+                        let fmt_total = ns.nFormat(current_total, '0.0a');
+                        let msg = `BOUGHT ${stock} for $${fmt_total}` 
+                        ns.toast(msg, BUY, ttime);
+                        ns.tprint(msg);
+                    }
+
+                }
+            }
+        }
+    }
+ 
+}
+
+const WARN = 'warning';
+const ERROR = 'error';
+const GOOD = 'success';
+const INFO = 'info';  
+const BUY = INFO;
+const SELL = WARN;
+const ttime = 20000;
