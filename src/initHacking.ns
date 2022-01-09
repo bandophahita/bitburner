@@ -24,6 +24,25 @@ function localeHHMMSS(ms = 0) {
 }
 
 /** @param {NS} ns */
+async function areYouSure(ns) {
+    let anyfilesexist = false
+    for (let filename of filesToDownload) {
+        if (ns.fileExists(filename)){
+            anyfilesexist = true
+        }
+    }
+    if (anyfilesexist) {
+        if (!await ns.prompt(`Are you sure? This will overwrite current scripts.`)) {
+            ns.exit()
+        }
+        if (!await ns.prompt("Are you REALLY sure? Local edits will be lost")) {
+            ns.exit()
+        }
+    }
+}
+
+
+/** @param {NS} ns */
 export async function main(ns) {
     ns.tprint(`[${localeHHMMSS()}] Starting initHacking.ns`)
 
@@ -32,6 +51,7 @@ export async function main(ns) {
     if (hostname !== 'home') {
         throw new Exception('Run the script from home')
     }
+    await areYouSure();
 
     for (let i = 0; i < filesToDownload.length; i++) {
         const filename = filesToDownload[i]
