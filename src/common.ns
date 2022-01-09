@@ -1,3 +1,5 @@
+export const baseUrl = 'https://raw.githubusercontent.com/bandophahita/bitburner/master/src/'
+
 export function settings() {
     return {
         minSecurityLevelOffset: 2,
