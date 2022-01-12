@@ -87,7 +87,8 @@ export async function main(ns) {
             }
         }
 
-        if (mode_sell_only && ownedStocks.length == 0) {
+        if (mode_sell_only && !ownedStocks.length) {
+            ns.print("no more owned stocks.")
             ns.exit()
         }
 
