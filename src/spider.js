@@ -1,26 +1,8 @@
 // Crawls through each server and attempts to get into servers available
 // then runs whatever script was passed in (mainHack if nothing specified)
 
-import { settings, setItem, localeHHMMSS } from 'common.ns'
+import { settings, setItem, localeHHMMSS, hackPrograms, hackScripts, getPlayerDetails } from 'common.js'
 
-const hackPrograms = ['BruteSSH.exe', 'FTPCrack.exe', 'relaySMTP.exe', 'HTTPWorm.exe', 'SQLInject.exe']
-
-// ------------------------------------------------------------------------------------------------
-/** @param {NS} ns */
-function getPlayerDetails(ns) {
-    let portHacks = 0
-
-    hackPrograms.forEach((hackProgram) => {
-        if (ns.fileExists(hackProgram, 'home')) {
-            portHacks += 1
-        }
-    })
-
-    return {
-        hackingLevel: ns.getHackingLevel(),
-        portHacks,
-    }
-}
 
 // ------------------------------------------------------------------------------------------------
 function allHacks(host) {
@@ -34,10 +16,10 @@ function allHacks(host) {
 // ------------------------------------------------------------------------------------------------
 /** @param {NS} ns */
 export async function main(ns) {
-    ns.tprint(`Starting spider.ns`)
+    ns.tprint(`Starting spider.js`)
 
     const scriptToRunAfter = ns.args[0]
-
+    const targetName = ns.args[1] || ""
     let hostname = ns.getHostname()
 
     if (hostname !== 'home') {
@@ -58,7 +40,7 @@ export async function main(ns) {
             growth: ns.getServerGrowth(host),
             minSecurityLevel: ns.getServerMinSecurityLevel(host),
             baseSecurityLevel: ns.getServerBaseSecurityLevel(host),
-            ram: ns.getServerRam(host)[0],
+            ram: ns.getServerMaxRam(host),
             files: ns.ls(host),
         }
 
@@ -142,9 +124,9 @@ export async function main(ns) {
     setItem(settings().keys.serverMap, serverMap)
 
     if (!scriptToRunAfter) {
-        scriptToRunAfter = 'mainHack.ns'
+        scriptToRunAfter = 'mainHack.js'
     }
 
     ns.tprint(`Spawning ${scriptToRunAfter}`)
-    ns.spawn(scriptToRunAfter, 1)
+    ns.spawn(scriptToRunAfter, 1, targetName)
 }
