@@ -1,9 +1,9 @@
 import { localeHHMMSS, getItem, setItem, getPlayerDetails, hackPrograms, hackScripts, createUUID } from 'common.js'
 
 const settings = {
-    homeRamReserved: 30,
-    homeRamReservedBase: 30,
-    homeRamExtraRamReserved: 50,
+    homeRamReserved: 40,
+    homeRamReservedBase: 40,
+    homeRamExtraRamReserved: 64,
     homeRamBigMode: 64,
     minSecurityLevelOffset: 1,
     maxMoneyMultiplayer: 0.9,
@@ -137,6 +137,7 @@ function findTargetServer(ns, serversList, servers, serverExtraData) {
 /** @param {NS} ns */
 export async function main(ns) {
     ns.print(" ####################### START OF SCRIPT ############################### ")
+    ns.disableLog("disableLog")
     ns.disableLog("exec");
     ns.disableLog("getServerSecurityLevel");
     ns.disableLog("getServerMoneyAvailable");
