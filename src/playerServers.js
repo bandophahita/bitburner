@@ -1,9 +1,11 @@
+// This handles buying and upgrading all of the player owned servers.
+import { getItem, setItem, createUUID} from 'common.js'
 const settings = {
     maxPlayerServers: 25,
     gbRamCost: 55000,
     maxGbRam: 1048576,
     minGbRam: 64,
-    totalMoneyAllocation: 0.9,
+    totalMoneyAllocation: 0.8, // 70%
     actions: {
         BUY: 'buy',
         UPGRADE: 'upgrade',
@@ -13,27 +15,16 @@ const settings = {
     },
 }
 
-// ------------------------------------------------------------------------------------------------
-function getItem(key) {
-    let item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : undefined
+/** @param {NS} ns */
+function getMoney(ns){
+    return ns.getPlayer().money
+    // alternate 
+    // return ns.getServerMoneyAvailable('home')
+}
+function getAvailableMoney(ns){
+    return ns.getPlayer().money * settings.totalMoneyAllocation
 }
 
-// ------------------------------------------------------------------------------------------------
-function setItem(key, value) {
-    localStorage.setItem(key, JSON.stringify(value))
-}
-
-// ------------------------------------------------------------------------------------------------
-function createUUID() {
-    var dt = new Date().getTime()
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = (dt + Math.random() * 16) % 16 | 0
-        dt = Math.floor(dt / 16)
-        return (c == 'x' ? r : (r & 0x3) | 0x8).toString(16)
-    })
-    return uuid
-}
 
 /** @param {NS} ns */
 function updateServer(ns, serverMap, host) {
@@ -45,7 +36,7 @@ function updateServer(ns, serverMap, host) {
         growth: ns.getServerGrowth(host),
         minSecurityLevel: ns.getServerMinSecurityLevel(host),
         baseSecurityLevel: ns.getServerBaseSecurityLevel(host),
-        ram: ns.getServerRam(host)[0],
+        ram: ns.getServerMaxRam(host),
         connections: ['home'],
         parent: 'home',
         children: [],
@@ -58,6 +49,7 @@ function updateServer(ns, serverMap, host) {
     })
 
     setItem(settings.keys.serverMap, serverMap)
+    //ns.tprint(`wrote to localStorage ${settings.keys.serverMap} via playerServers`)
 }
 
 /** @param {NS} ns */
@@ -65,11 +57,11 @@ function getPurchasedServers(ns) {
     let purchasedServers = ns.getPurchasedServers()
     if (purchasedServers.length) {
         purchasedServers.sort((a, b) => {
-            const totalRamA = ns.getServerRam(a).shift()
-            const totalRamB = ns.getServerRam(b).shift()
+            const totalRamA = ns.getServerMaxRam(a)
+            const totalRamB = ns.getServerMaxRam(b)
 
             if (totalRamA === totalRamB) {
-                return ns.getServerRam(a).shift() - ns.getServerRam(b).shift()
+                return ns.getServerMaxRam(a) - ns.getServerMaxRam(b)
             } else {
                 return totalRamA - totalRamB
             }
@@ -81,12 +73,13 @@ function getPurchasedServers(ns) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-    ns.tprint(`Starting playerServers.ns`)
+    ns.tprint(`Starting playerServers.js`)
+    ns.disableLog("getServerMaxRam");
+    ns.disableLog("sleep");
 
     settings.maxGbRam = ns.getPurchasedServerMaxRam()
     settings.maxPlayerServers = ns.getPurchasedServerLimit()
     let hostname = ns.getHostname()
-
     if (hostname !== 'home') {
         throw new Exception('Run the script from home')
     }
@@ -100,11 +93,11 @@ export async function main(ns) {
         let action = purchasedServers.length < settings.maxPlayerServers ? settings.actions.BUY : settings.actions.UPGRADE
 
         if (action == settings.actions.BUY) {
-            let smallestCurrentServer = purchasedServers.length ? ns.getServerRam(purchasedServers[0]).shift() : 0
+            let smallestCurrentServer = purchasedServers.length ? ns.getServerMaxRam(purchasedServers[0]) : 0
             let targetRam = Math.max(settings.minGbRam, smallestCurrentServer)
 
             if (targetRam === settings.minGbRam) {
-                while (ns.getServerMoneyAvailable('home') * settings.totalMoneyAllocation >= targetRam * settings.gbRamCost * settings.maxPlayerServers) {
+                while (getAvailableMoney(ns) >= targetRam * settings.gbRamCost * settings.maxPlayerServers) {
                     targetRam *= 2
                 }
                 targetRam /= 2
@@ -113,7 +106,7 @@ export async function main(ns) {
             targetRam = Math.max(settings.minGbRam, targetRam)
             targetRam = Math.min(targetRam, settings.maxGbRam)
 
-            if (ns.getServerMoneyAvailable('home') * settings.totalMoneyAllocation >= targetRam * settings.gbRamCost) {
+            if (getAvailableMoney(ns) >= targetRam * settings.gbRamCost) {
                 let hostname = `pserv-${targetRam}-${createUUID()}`
                 hostname = ns.purchaseServer(hostname, targetRam)
 
@@ -125,8 +118,8 @@ export async function main(ns) {
                 }
             }
         } else {
-            let smallestCurrentServer = Math.max(ns.getServerRam(purchasedServers[0]).shift(), settings.minGbRam)
-            let biggestCurrentServer = ns.getServerRam(purchasedServers[purchasedServers.length - 1]).shift()
+            let smallestCurrentServer = Math.max(ns.getServerMaxRam(purchasedServers[0]), settings.minGbRam)
+            let biggestCurrentServer = ns.getServerMaxRam(purchasedServers[purchasedServers.length - 1])
             let targetRam = biggestCurrentServer
 
             if (smallestCurrentServer === settings.maxGbRam) {
@@ -136,7 +129,7 @@ export async function main(ns) {
             }
 
             if (smallestCurrentServer === biggestCurrentServer) {
-                while (ns.getServerMoneyAvailable('home') * settings.totalMoneyAllocation >= targetRam * settings.gbRamCost) {
+                while (getAvailableMoney(ns) >= targetRam * settings.gbRamCost) {
                     targetRam *= 4
                 }
 
@@ -146,14 +139,14 @@ export async function main(ns) {
             targetRam = Math.min(targetRam, settings.maxGbRam)
 
             purchasedServers = getPurchasedServers(ns)
-            if (targetRam > ns.getServerRam(purchasedServers[0]).shift()) {
+            if (targetRam > ns.getServerMaxRam(purchasedServers[0])) {
                 didChange = true
                 while (didChange) {
                     didChange = false
                     purchasedServers = getPurchasedServers(ns)
 
-                    if (targetRam > ns.getServerRam(purchasedServers[0]).shift()) {
-                        if (ns.getServerMoneyAvailable('home') * settings.totalMoneyAllocation >= targetRam * settings.gbRamCost) {
+                    if (targetRam > ns.getServerMaxRam(purchasedServers[0])) {
+                        if (getAvailableMoney(ns) >= targetRam * settings.gbRamCost) {
                             let hostname = `pserv-${targetRam}-${createUUID()}`
 
                             await ns.killall(purchasedServers[0])
@@ -164,7 +157,7 @@ export async function main(ns) {
 
                                 if (hostname) {
                                     ns.tprint(`Upgraded: ${purchasedServers[0]} into server: ${hostname} (${targetRam} GB)`)
-
+                                    ns.print(`Upgraded: ${purchasedServers[0]} into server: ${hostname} (${targetRam} GB)`)
                                     updateServer(ns, serverMap, hostname)
                                     didChange = true
                                 }
