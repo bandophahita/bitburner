@@ -1,30 +1,13 @@
 // Crawls through each server and attempts to get into servers available
-// then runs whatever script was passed in (mainHack if nothing specified)
-
-import { settings, setItem, localeHHMMSS, hackPrograms, hackScripts, getPlayerDetails } from 'common.js'
+import { settings, setItem, hackPrograms, getPlayerDetails } from 'common.js'
 
 
-// ------------------------------------------------------------------------------------------------
-function allHacks(host) {
-    ns.brutessh(host)
-    ns.ftpcrack(host)
-    ns.relaysmtp(host)
-    ns.httpworm(host)
-    ns.sqlinject(host)
-}
-
-// ------------------------------------------------------------------------------------------------
 /** @param {NS} ns */
 export async function main(ns) {
     ns.tprint(`Starting spider.js`)
-
-    const scriptToRunAfter = ns.args[0]
-    const targetName = ns.args[1] || ""
     let hostname = ns.getHostname()
 
-    if (hostname !== 'home') {
-        throw new Exception('Run the script from home')
-    }
+    if (hostname !== 'home') throw new Exception('Run the script from home')
 
     const serverMap = { servers: {}, lastUpdate: new Date().getTime() }
     const scanArray = ['home']
@@ -122,11 +105,5 @@ export async function main(ns) {
     }
 
     setItem(settings().keys.serverMap, serverMap)
-
-    if (!scriptToRunAfter) {
-        scriptToRunAfter = 'mainHack.js'
-    }
-
-    ns.tprint(`Spawning ${scriptToRunAfter}`)
-    ns.spawn(scriptToRunAfter, 1, targetName)
+    ns.tprint(`spider.js FINISHED!`)
 }
