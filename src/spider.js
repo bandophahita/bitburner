@@ -1,7 +1,6 @@
 // Crawls through each server and attempts to get into servers available
-// uses 2.95GB RAM
-import { settings, setItem, hackPrograms, getPlayerDetails } from 'common.js'
-
+// uses 3.20GB RAM
+import { settings, setItem, hackPrograms, getPlayerDetails, } from 'common.js'
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -28,15 +27,18 @@ export async function main(ns) {
             files: ns.ls(host),
         }
 
-        const playerDetails = getPlayerDetails(ns)
         if (!ns.hasRootAccess(host)) {
-            if (serverMap.servers[host].ports <= playerDetails.portHacks && serverMap.servers[host].hackingLevel <= playerDetails.hackingLevel) {
-                hackPrograms.forEach((hackProgram) => {
-                    if (ns.fileExists(hackProgram, 'home')) {
-                        ns[hackProgram.split('.').shift().toLocaleLowerCase()](host)
-                    }
-                })
-                ns.nuke(host)
+            const playerDetails = getPlayerDetails(ns)
+            let server = serverMap.servers[host];
+            let canBeHacked = server.ports <= playerDetails.portHacks && server.hackingLevel <= playerDetails.hackingLevel
+            if (canBeHacked) {
+                let nPortsNeeded = server.ports;
+                if (nPortsNeeded >= 5) {await ns.sqlinject(host)}
+                if (nPortsNeeded >= 4) {await ns.httpworm(host)}
+                if (nPortsNeeded >= 3) {await ns.relaysmtp(host)}
+                if (nPortsNeeded >= 2) {await ns.ftpcrack(host)}
+                if (nPortsNeeded >= 1) {await ns.brutessh(host)}
+                await ns.nuke(host);
             }
         }
 
@@ -108,3 +110,4 @@ export async function main(ns) {
     setItem(settings().keys.serverMap, serverMap)
     ns.tprint(`spider.js FINISHED!`)
 }
+
