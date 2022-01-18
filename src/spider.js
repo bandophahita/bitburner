@@ -1,4 +1,5 @@
 // Crawls through each server and attempts to get into servers available
+// uses 2.95GB RAM
 import { settings, setItem, hackPrograms, getPlayerDetails } from 'common.js'
 
 
